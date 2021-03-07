@@ -15,4 +15,12 @@ class MainHandler
         UserTools::userToLog($userFields);
     }
 
+    /**
+     * @param int $userId
+     */
+    public static function beforeUserDelete(int $userId): bool
+    {
+        return UserTools::preventUserDeletion($userId);
+    }
+
 }
