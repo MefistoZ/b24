@@ -3,11 +3,14 @@
 namespace Base\Handlers;
 
 use Base\User\UserTools;
+use Bitrix\Highloadblock\HighloadBlockTable;
+use Bitrix\Main\Loader;
 
 class MainHandler
 {
 
     const USER_MENU_ID = 'menu_users';
+    const HIGHLOAD_LEAD_LOG_IBLOCK_ID = 2;
 
     /**
      * @param $userFields
@@ -42,4 +45,22 @@ class MainHandler
         }
     }
 
+    public static function afterCrmLeadUpdate($fields)
+    {
+        if (!empty($fields)) {
+            global $USER;
+            Loader::includeModule("highloadblock");
+
+            $leadLogHL = HighloadBlockTable::getById(self::HIGHLOAD_LEAD_LOG_IBLOCK_ID)->fetch();
+            $entity = HighloadBlockTable::compileEntity($leadLogHL);
+            $entityDataClass = $entity->getDataClass();
+
+            $data = [
+                "UF_LEAD_ID" => $fields['ID'],
+                "UF_USER_ID" => (int)$USER->GetID(),
+                "UF_UPDATE_LEAD_DATE" => date("d.m.Y H:i:s")
+            ];
+            $entityDataClass::add($data);
+        }
+    }
 }
