@@ -5,6 +5,9 @@ namespace Base\Handlers;
 use Base\User\UserTools;
 use Bitrix\Highloadblock\HighloadBlockTable;
 use Bitrix\Main\Loader;
+use COption;
+use CTimeMan;
+use CTimeManEntry;
 
 class MainHandler
 {
@@ -62,5 +65,10 @@ class MainHandler
             ];
             $entityDataClass::add($data);
         }
+    }
+
+    public static function beforeUserLogin(&$arFields): bool
+    {
+        return UserTools::isWorkingTime($arFields);
     }
 }

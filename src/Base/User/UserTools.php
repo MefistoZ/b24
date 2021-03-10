@@ -2,10 +2,15 @@
 
 namespace Base\User;
 
+use Bitrix\Main\Loader;
+use COption;
+use CTimeMan;
 use CUser;
 
 class UserTools
 {
+
+    const ADMIN_ID = 1;
 
     /**
      * @param $userFields
@@ -34,6 +39,44 @@ class UserTools
             return false;
         }
         return true;
+    }
+
+    /**
+     * @param $arFields
+     * @return bool
+     * @throws \Bitrix\Main\LoaderException
+     */
+    public static function isWorkingTime ($arFields): bool
+    {
+        if ($arFields['LOGIN'] === 'admin') {
+            return true;
+        }
+        global $APPLICATION;
+        Loader::includeModule('timeman');
+        $workdayStart = CTimeMan::FormatTime(COption::GetOptionInt('timeman','workday_start', 32400), true);
+        $workdayFinish = CTimeMan::FormatTime(COption::GetOptionInt('timeman','workday_finish', 64800), true);
+        $currentTime = date('H:m');
+
+        $currentDateTime = strtotime(date('Y-m-d')  ." ". $currentTime);
+        $startDateTime = strtotime(date('Y-m-d')  ." ". $workdayStart);
+
+        if (strtotime($workdayStart) <= strtotime($workdayFinish)) {
+            $endDateTime = strtotime(date('Y-m-d')  ." ". $workdayFinish);
+            $previousDayEnd = strtotime(date('Y-m-d')  ." ". $workdayFinish . "-1 days");
+        } else {
+            $endDateTime = strtotime(date('Y-m-d')  ." ". $workdayFinish . "+1 days");
+            $previousDayEnd = strtotime(date('Y-m-d')  ." ". $workdayFinish );
+        }
+
+        if ($currentDateTime >= $startDateTime && $currentDateTime <= $endDateTime) {
+            return true;
+        }
+        if ($currentDateTime < $startDateTime && $currentDateTime < $previousDayEnd) {
+            return true;
+        } else {
+            $APPLICATION->throwException("Сейчас нерабочее время");
+            return false;
+        }
     }
 
 }
